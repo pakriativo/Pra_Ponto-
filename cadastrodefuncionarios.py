@@ -4,8 +4,73 @@ from tkinter import messagebox
 from datetime import datetime
 import random
 from string import digits
-#-----------------------------------------------------
+from validaCpf import valida_cpf
 
+#-----------------------------------------------------
+def format_cpf(entry):
+    # Remove caracteres não numéricos
+    cpf = ''.join(c for c in entry.get() if c.isdigit())
+
+    # Completa com zeros à esquerda se o CPF tiver menos de 11 dígitos
+    cpf = cpf.zfill(11)
+
+    # Verifica se o CPF está vazio ou contém apenas zeros
+    if not cpf or cpf == '0'*11:
+        entry.delete(0, 'end')  # Limpa o conteúdo do widget
+    else:
+        # Formata o CPF com pontos e traço
+        formatted_cpf = f'{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}'
+        entry.delete(0, 'end')  # Limpa o conteúdo do widget
+        entry.insert(0, formatted_cpf)  # Insere o CPF formatado no widget
+
+def a_cadaTecla(event):
+    # Função chamada a cada tecla pressionada
+    allowed_chars = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
+    char = event.char
+
+    if char in allowed_chars or event.keysym in ('BackSpace', 'Delete'):
+        # Permite a entrada de dígitos, a tecla Backspace/Delete
+
+        # Remove todos os caracteres não numéricos
+        current_text = ''.join(c for c in cpf_entry.get() if c.isdigit())
+
+        # Limita a entrada a no máximo 11 dígitos
+        if len(current_text) < 11:
+            cpf_entry.delete(0, 'end')
+            cpf_entry.insert(0, current_text)
+        else:
+            if event.keysym in ('BackSpace', 'Delete'):
+                return  # Permite a exclusão mesmo após atingir 11 dígitos
+            else:
+                return "break"  # Impede a entrada de mais dígitos
+
+    else:
+        # Ignora todas as outras teclas
+        return "break"
+
+def on_enter(event):
+    cpf = ''.join(c for c in cpf_entry.get() if c.isdigit())
+
+    # Verifica se o campo de CPF está vazio
+    if not cpf:
+        # Campo vazio, pode prosseguir para o próximo passo
+        print('Próximo passo (sem CPF)')
+        ativar_entrada_hora()
+
+    try:
+        if valida_cpf(cpf):
+            format_cpf(cpf_entry)
+            print('Próximo passo')
+            ativar_entrada_hora()
+        else:
+            exibir_erro('CPF inválido')
+    except ValueError as e:
+        exibir_erro(str(e))
+
+def ativar_entrada_hora():
+    # Coloque aqui a lógica para ativar a entrada de horas
+    # Configurar o foco para a caixa de lista de horários
+    optionmenu_de_horas.focus()
 
 def cadastrar_funcionario():
     # obtém os valores inseridos nos campos
@@ -105,73 +170,6 @@ class Extrajanela(Toplevel):
         button_ok.pack(pady=20)
 
 #_____________________________________________________________________________________________________________
-def formatar_cpf(event):
-    
-    def numerar_cpf():
-        for a in cpf_digitado:
-            a = int(a)
-            cpf_numerado.append(a)
-        return 
-
-    def quantidade():
-        if len(cpf_digitado) < 11 or len(cpf_digitado) > 11:
-            return False
-        else:
-            return True
-    '''def primeiro_digito():
-        if len(cpf_numerado) < 11 or len(cpf_numerado) > 11:
-            return False
-        else:
-            acumulador = 0
-            resultado = 0
-            controlador = 10
-            for numeros in cpf_numerado[0:9]:
-                resultado = numeros * controlador
-                acumulador += resultado
-                controlador = controlador - 1
-            acumulador = acumulador * 10 % 11
-            if acumulador == 10:
-                acumulador = 0
-            if acumulador == cpf_numerado[9]:
-                return True
-            else:
-                return False
-    def segundo_digito():
-        if len(cpf_numerado) < 11 or len(cpf_numerado) > 11:
-            return False
-        else:
-            acumulador2 = 0
-            resultado2 = 0
-            controlador2 = 11
-            for numeros2 in cpf_numerado[0:10]:
-                resultado2 = numeros2 * controlador2
-                acumulador2 += resultado2
-                controlador2 = controlador2 - 1
-            acumulador2 = acumulador2 * 10 % 11
-            if acumulador2 == 10:
-                acumulador2 = 0
-            if acumulador2 == cpf_numerado[10]:
-                return False
-            else:
-                return True'''
-
-
-    cpf_digitado = cpf_entry.get()
-    cpf_numerado = []
-    cpf_digitado = cpf_digitado.replace('.', '').replace('-','')
-    
-    numerar_cpf()
-    quantidade()
-    primeiro_digito()
-    segundo_digito()
-   
-    if quantidade() == True and primeiro_digito() == True and segundo_digito() == True:
-        proximo_campo(event)
-    elif cpf_digitado == "":
-        proximo_campo(event)
-    else:
-        exibir_erro("CPF Inválido.")
-#&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 # Função para atualizar a cor do rótulo (ESTÁ USANDO: RADIO)
 def obter_estilo():
     # Verificar o sistema operacional atual
@@ -197,17 +195,24 @@ def obter_estilo():
 def proximo_campo(event):
     # pula para o próximo campo
     event.widget.tk_focusNext().focus()
-    if todos_campos_preenchidos():
+    if todos_campos_preenchidos() == True:
         if funcao_ESCOLHER_AREA_DE_TRABALHO != "Função ex.: Vendas":
             cadastrar_funcionario()
         return "break"
-    
+    print('option menu função Area De Trabalho vazia')
     return "break"
 
 
 def todos_campos_preenchidos():
-    # verifica se todos os campos obrigatórios estão preenchidos
-    return bool(nome_entry.get() and funcao_ESCOLHER_AREA_DE_TRABALHO.get())
+    nome_value = nome_entry.get()
+    funcao_value = funcao_ESCOLHER_AREA_DE_TRABALHO.get()
+
+    print("Valor do Nome:", repr(nome_value))
+    print("Valor da Área de Trabalho:", repr(funcao_value))
+
+    # Verifica se todos os campos obrigatórios estão preenchidos
+    return bool(nome_value.strip() and funcao_value.strip() != "Função ex.: Vendas")
+
 
 
 def exibir_erro(mensagem):
@@ -382,7 +387,10 @@ optionmenu_de_horas.place(x=25, y=345)
 nome_entry.bind("<Return>", proximo_campo)
 nascimento_entry.bind("<Return>", formatar_data_nasc)
 data_admissao_entry.bind("<Return>", formatar_data_admissao)
-cpf_entry.bind("<Return>", formatar_cpf)
+cpf_entry.bind('<Key>', a_cadaTecla)
+cpf_entry.bind('<Return>', on_enter)
+cpf_entry.bind("<Tab>", on_enter)
+
 
 # Botão cadastro
 ctk.CTkButton(quadro, text="Cadastrar",command=cadastrar_funcionario).place(x=25, y=395)
