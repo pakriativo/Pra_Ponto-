@@ -147,7 +147,7 @@ class Extrajanela(Toplevel):
         self.title("ID Funcionário")
         self.configure(background="#f2f2f2")  # Definindo cor de fundo
 
-        self.iconbitmap("imagens/Image_Icon_marca.ico")  #Icone
+        self.iconbitmap("imagens/Image_Icon_marca.ico")
 
 
         # Estilo para os rótulos
