@@ -6,6 +6,23 @@ import random
 from string import digits
 from validaCpf import valida_cpf
 
+#----------------------------------------------------
+#nova importação para uso de database
+from database import conectar_banco_dados, criar_tabelas, inserir_funcionario, consultar_dados_funcionario
+
+# Substitua 'meu_banco_de_dados.db' pelo nome desejado para o arquivo de banco de dados
+db_filename = 'db_ControleDePonto.db'
+
+# Conectar ao banco de dados
+connection = conectar_banco_dados(db_filename)
+
+# Criar as tabelas (se não existirem)
+criar_tabelas(connection)
+
+# Consultar e imprimir dados
+dados = consultar_dados_funcionario(connection)
+for row in dados:
+    print(row)
 #-----------------------------------------------------
 def format_cpf(entry):
     # Remove caracteres não numéricos
@@ -93,38 +110,10 @@ def cadastrar_funcionario():
     elif entrada == "00:00":
             messagebox.showinfo("Importante","Defina o Horário de entrada do Funcionário.")
             return
-            
-
-    # lê a planilha existente
-    '''df = pd.read_excel("banco_de_dados.xlsx")
-
-    # gera o ID único
-    id_unico = gerar_id_unico(df)
-
-    # exibe uma janela pop-up com o número de ID gerado
-    exibir_id_unico(id_unico)
-
-
-    # cria um novo DataFrame com os dados a serem adicionados
-    novo_funcionario = pd.DataFrame(
-        {
-            "ID": [id_unico],
-            "Nome": [nome],
-            "Função": [funcao],
-            "Nascimento": [nascimento],
-            "Data de Admissão": [data_admissao],
-            "Cargo/Hierarquia": [cargo],
-            "CPF": [cpf],
-            "Entrada": [entrada],
-        }
-    )'''
-
-    # concatena o novo funcionário com o DataFrame existente
-    '''df = pd.concat([df, novo_funcionario], ignore_index=True)
-
-    # salva o DataFrame atualizado na planilha
-    df.to_excel("banco_de_dados.xlsx", index=False)'''
-
+    
+    # Inserir dados no banco de dados
+    inserir_funcionario(connection, nome, funcao, nascimento, data_admissao, cargo, cpf, entrada)
+    connection.commit()# Salvar as alterações
     # limpa os campos após o cadastro
     nome_entry.delete(0, END)
     funcao_ESCOLHER_AREA_DE_TRABALHO.set("Função ex.: Vendas")
@@ -133,11 +122,7 @@ def cadastrar_funcionario():
     radio_ESCOLHER_CARGO.set(0)
     cpf_entry.delete(0, END)
     horario_var.set("00:00")
-    
-
-    # move o foco para o próximo campo
-    nome_entry.focus()
-
+    nome_entry.focus()# move o foco para o próximo campo
 
 class Extrajanela(Toplevel):
     def __init__(self, id_unico):
@@ -147,7 +132,7 @@ class Extrajanela(Toplevel):
         self.title("ID Funcionário")
         self.configure(background="#f2f2f2")  # Definindo cor de fundo
 
-        self.iconbitmap("imagens/Image_Icon_marca.ico")
+        self.iconbitmap("imagens/Image_Icon_marca.ico")  #Icone
 
 
         # Estilo para os rótulos
@@ -386,7 +371,9 @@ optionmenu_de_horas.place(x=25, y=345)
 # adiciona os eventos de teclado para pular entre os campos
 nome_entry.bind("<Return>", proximo_campo)
 nascimento_entry.bind("<Return>", formatar_data_nasc)
+nascimento_entry.bind("<Tab>", formatar_data_nasc)
 data_admissao_entry.bind("<Return>", formatar_data_admissao)
+data_admissao_entry.bind("<Tab>", formatar_data_admissao)
 cpf_entry.bind('<Key>', a_cadaTecla)
 cpf_entry.bind('<Return>', on_enter)
 cpf_entry.bind("<Tab>", on_enter)
@@ -395,10 +382,10 @@ cpf_entry.bind("<Tab>", on_enter)
 # Botão cadastro
 ctk.CTkButton(quadro, text="Cadastrar",command=cadastrar_funcionario).place(x=25, y=395)
 
-
+def cancelar_butao():
+    connection.close()
+    janela.destroy()
 # Botão Fechar  
-ctk.CTkButton(quadro,fg_color="#D4D4D4" ,text="cancelar",text_color=("#4E4E4E"),hover_color=("#B3B3B3"), command=janela.destroy).place(x=185, y=395)
-
-#____________________________________________________________________________________________________
+ctk.CTkButton(quadro,fg_color="#D4D4D4" ,text="cancelar",text_color=("#4E4E4E"),hover_color=("#B3B3B3"), command=cancelar_butao).place(x=185, y=395)
 
 janela.mainloop()  
